@@ -31,5 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+<<<<<<< HEAD:.gitignore
+.idea/
+*.iml*.pdf
+=======
 backend/.idea/
 *.iml
+>>>>>>> main:backend/.gitignore
