@@ -1,15 +1,15 @@
 package com.File_Merge_Split.backend.controller;
 
+import com.File_Merge_Split.backend.service.GeminiService;
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
-import org.apache.pdfbox.Loader;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +17,12 @@ import java.util.Map;
 @RestController
 @RequestMapping("/pdf")
 public class FileController {
+
+    private final GeminiService geminiService;
+
+    public FileController(GeminiService geminiService) {
+        this.geminiService = geminiService;
+    }
 
     // Split PDF into 2 parts
     @PostMapping("/split")
@@ -90,7 +96,7 @@ public class FileController {
         }
     }
 
-    // Extract Text from PDF
+    // Extract Text and Summarize using Gemini
     @PostMapping("/extract-text")
     public ResponseEntity<Map<String, String>> extractText(@RequestParam("file") MultipartFile file) {
         Map<String, String> response = new HashMap<>();
@@ -104,26 +110,22 @@ public class FileController {
             try (PDDocument document = Loader.loadPDF(convFile)) {
                 PDFTextStripper textStripper = new PDFTextStripper();
                 String text = textStripper.getText(document);
+
+                // Call Gemini for summarization
+                String summary = geminiService.askGemini("Summarize the following text:\n\n" + text);
+
                 response.put("status", "success");
-                response.put("text", text);
+                response.put("extractedText", text);
+                response.put("summary", summary);
                 return ResponseEntity.ok(response);
             }
 
         } catch (Exception e) {
             response.put("status", "error");
-            response.put("message", "Failed to extract text: " + e.getMessage());
+            response.put("message", "Failed to extract and summarize text: " + e.getMessage());
             return ResponseEntity.badRequest().body(response);
         } finally {
             if (convFile != null && convFile.exists()) convFile.delete();
         }
-    }
-
-    // Placeholder: Extract & Summarize (Future Feature)
-    @PostMapping("/extract-and-summarize")
-    public ResponseEntity<Map<String, String>> extractAndSummarize(@RequestParam("file") MultipartFile file) {
-        Map<String, String> response = new HashMap<>();
-        response.put("status", "pending");
-        response.put("message", "This endpoint will extract and summarize text using AI (to be implemented).");
-        return ResponseEntity.ok(response);
     }
 }
