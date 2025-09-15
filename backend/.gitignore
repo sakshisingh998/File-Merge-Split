@@ -38,3 +38,4 @@ build/
 backend/.idea/
 *.iml
 >>>>>>> main:backend/.gitignore
+.env
