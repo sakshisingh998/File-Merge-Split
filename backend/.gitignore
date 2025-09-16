@@ -19,6 +19,8 @@ backend/.idea
 *.iml
 *.ipr
 *.pdf
+*.env
+
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/
@@ -38,4 +40,3 @@ build/
 backend/.idea/
 *.iml
 >>>>>>> main:backend/.gitignore
-.env

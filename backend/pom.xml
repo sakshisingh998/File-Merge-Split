@@ -74,6 +74,7 @@
 			<artifactId>google-genai</artifactId>
 			<version>1.0.0</version>
 		</dependency>
+
 	</dependencies>
 
 	<build>
@@ -88,6 +89,8 @@
 							<artifactId>lombok</artifactId>
 						</path>
 					</annotationProcessorPaths>
+					<source>7</source>
+					<target>7</target>
 				</configuration>
 			</plugin>
 			<plugin>
