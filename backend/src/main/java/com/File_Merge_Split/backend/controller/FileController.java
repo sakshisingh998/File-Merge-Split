@@ -25,8 +25,11 @@ public class FileController {
     }
 
     // Split PDF into 2 parts
+    // Custom Split PDF based on page ranges
     @PostMapping("/split")
-    public ResponseEntity<Map<String, String>> splitPDF(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<Map<String, String>> splitPDF(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("ranges") String ranges) {
         Map<String, String> response = new HashMap<>();
         File convFile = null;
 
@@ -37,27 +40,36 @@ public class FileController {
 
             try (PDDocument document = Loader.loadPDF(convFile)) {
                 int totalPages = document.getNumberOfPages();
-                int midpoint = totalPages / 2;
 
-                // Part 1
-                PDDocument part1 = new PDDocument();
-                for (int i = 0; i < midpoint; i++) {
-                    part1.addPage(document.getPage(i));
-                }
-                part1.save("part1.pdf");
-                part1.close();
+                // Example input: "1-3,4-5,6-10"
+                String[] parts = ranges.split(",");
+                int partCounter = 1;
 
-                // Part 2
-                PDDocument part2 = new PDDocument();
-                for (int i = midpoint; i < totalPages; i++) {
-                    part2.addPage(document.getPage(i));
+                for (String part : parts) {
+                    String[] range = part.split("-");
+                    int start = Integer.parseInt(range[0]) - 1; // zero-based index
+                    int end = Integer.parseInt(range[1]) - 1;
+
+                    if (start < 0 || end >= totalPages || start > end) {
+                        response.put("status", "error");
+                        response.put("message", "Invalid range: " + part);
+                        return ResponseEntity.badRequest().body(response);
+                    }
+
+                    PDDocument newDoc = new PDDocument();
+                    for (int i = start; i <= end; i++) {
+                        newDoc.addPage(document.getPage(i));
+                    }
+
+                    String outputFileName = "part" + partCounter + ".pdf";
+                    newDoc.save(outputFileName);
+                    newDoc.close();
+                    partCounter++;
                 }
-                part2.save("part2.pdf");
-                part2.close();
             }
 
             response.put("status", "success");
-            response.put("message", "PDF split successfully (saved as part1.pdf and part2.pdf)");
+            response.put("message", "PDF split successfully into custom parts.");
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
