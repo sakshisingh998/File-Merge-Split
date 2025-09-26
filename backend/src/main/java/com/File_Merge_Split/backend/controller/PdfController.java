@@ -8,12 +8,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 @RestController
-@RequestMapping("/api/pdf")
+@RequestMapping("/pdf")
 public class PdfController {
 
     private final SplitService splitService;
@@ -38,7 +38,6 @@ public class PdfController {
         return splitService.splitPDF(file, ranges);
     }
 
-
     @PostMapping("/merge")
     public ResponseEntity<Map<String, String>> mergePDFs(
             @RequestParam("files") List<MultipartFile> files) {
@@ -48,14 +47,23 @@ public class PdfController {
     @PostMapping("/extract-text")
     public ResponseEntity<Map<String, String>> extractText(
             @RequestParam("file") MultipartFile file) {
-        return extractService.extractText(file);
+        ResponseEntity<Map<String, String>> extractResponse = extractService.extractText(file);
+        System.out.println("DEBUG: Extracted text -> " + extractResponse.getBody().get("extractedText"));
+        return extractResponse;
     }
 
-    @PostMapping("/summarize")
-    public ResponseEntity<Map<String, String>>
-    summarizeText(@RequestBody Map<String, String> request) {
-        String extractedText = request.get("extractedText");
-        return summarizeService.summarize(extractedText);
-    }
+    @PostMapping("/extract-and-summarize")
+    public ResponseEntity<Map<String, String>> extractAndSummarize(
+            @RequestParam("file") MultipartFile file) {
 
+        ResponseEntity<Map<String, String>> extractResponse = extractService.extractText(file);
+        String extractedText = extractResponse.getBody().get("extractedText");
+
+        System.out.println("DEBUG: Extracted Text for summarization -> " + extractedText);
+
+        ResponseEntity<Map<String, String>> summaryResponse = summarizeService.summarize(extractedText);
+        System.out.println("DEBUG: Summary returned -> " + summaryResponse.getBody().get("summary"));
+
+        return summaryResponse;
+    }
 }
