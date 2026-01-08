@@ -1,0 +1,88 @@
+# Azure Pipeline for File Merge & Split Application
+# Builds frontend and backend, then deploys to Azure App Service
+
+trigger:
+  branches:
+    include:
+      - main
+      - master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  javaVersion: '17'
+  nodeVersion: '18.x'
+
+steps:
+  # Setup Node.js
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '$(nodeVersion)'
+    displayName: 'Setup Node.js'
+
+  # Build Frontend
+  - script: |
+      cd frontend
+      npm ci
+      npm run build
+    displayName: 'Build Frontend'
+
+  # Copy Frontend to Backend Resources
+  - script: |
+      mkdir -p backend/src/main/resources/static
+      cp -r frontend/dist/* backend/src/main/resources/static/
+    displayName: 'Copy Frontend to Backend'
+
+  # Setup Java
+  - task: JavaToolInstaller@0
+    inputs:
+      versionSpec: '$(javaVersion)'
+      jdkArchitecture: 'x64'
+    displayName: 'Setup Java'
+
+  # Build Backend with Frontend Included
+  - task: Maven@3
+    inputs:
+      mavenPomFile: 'backend/pom.xml'
+      mavenOptions: '-Xmx3072m'
+      goals: 'clean package -DskipTests'
+    displayName: 'Build Backend JAR'
+
+  # Publish Artifact for Deployment
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: 'backend/target'
+      ArtifactName: 'backend-jar'
+      ArtifactType: 'Container'
+    displayName: 'Publish JAR Artifact'
+
+  # Deploy to Azure App Service
+  - task: AzureWebApp@1
+    inputs:
+      azureSubscription: 'Your-Azure-Subscription-Connection-Name'
+      appName: 'Your-Azure-App-Service-Name'
+      package: '$(Pipeline.Workspace)/backend-jar/backend-*.jar'
+      runtimeStack: 'JAVA|17'
+      startUpCommand: 'java -jar backend-*.jar'
+    displayName: 'Deploy to Azure App Service'
+
+  # Configure Environment Variables
+  - task: AzureAppServiceSettings@1
+    inputs:
+      azureSubscription: 'Your-Azure-Subscription-Connection-Name'
+      appName: 'Your-Azure-App-Service-Name'
+      appSettings: |
+        [
+          {
+            "name": "GOOGLE_API_KEY",
+            "value": "$(GOOGLE_API_KEY)",
+            "slotSetting": false
+          },
+          {
+            "name": "SERVER_PORT",
+            "value": "8080",
+            "slotSetting": false
+          }
+        ]
+    displayName: 'Configure App Settings'
