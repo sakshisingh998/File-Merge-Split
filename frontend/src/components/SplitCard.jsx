@@ -4,6 +4,12 @@ import { Split, HelpCircle } from "lucide-react";
 import Button from "./Button";
 import ConfirmationModal from "./ConfirmationModal";
 import HelpModal from "./HelpModal";
+import LoadingSpinner from "./LoadingSpinner";
+import ErrorMessage from "./ErrorMessage";
+import SuccessMessage from "./SuccessMessage";
+import FileInput from "./FileInput";
+import TextInput from "./TextInput";
+import { splitFile, downloadBlob } from "../api/api";
 import theme from "../config/theme";
 
 function SplitCard() {
@@ -11,6 +17,9 @@ function SplitCard() {
   const [ranges, setRanges] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [splitBlob, setSplitBlob] = useState(null);
+  const [error, setError] = useState(null);
 
   const handleSplit = () => {
     if (!file || !ranges) {
@@ -20,11 +29,41 @@ function SplitCard() {
     setShowConfirm(true);
   };
 
-  const confirmSplit = () => {
-    // Process split logic here
-    console.log("Splitting PDF:", file.name, "Ranges:", ranges);
+  const confirmSplit = async () => {
     setShowConfirm(false);
-    // Reset form or show success message
+    setIsLoading(true);
+    setError(null);
+    setSplitBlob(null);
+
+    try {
+      const blob = await splitFile(file, ranges);
+      setSplitBlob(blob);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to split PDF. Please check your page ranges and try again.");
+      console.error("Split error:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDownload = () => {
+    if (splitBlob) {
+      const fileName = file?.name 
+        ? file.name.replace('.pdf', '') + '_split.zip'
+        : 'split_parts.zip';
+      downloadBlob(splitBlob, fileName);
+    }
+  };
+
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0]);
+    setError(null);
+    setSplitBlob(null);
+  };
+
+  const handleRangesChange = (e) => {
+    setRanges(e.target.value);
+    setError(null);
   };
 
   return (
@@ -52,37 +91,39 @@ function SplitCard() {
         </div>
 
         <div className="w-full max-w-sm space-y-4">
-          <input
-            type="file"
+          <FileInput
             accept="application/pdf"
-            onChange={(e) => setFile(e.target.files[0])}
-            className="w-full p-3 rounded-lg text-center border-2 transition-all duration-200 
-                       focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200 focus:outline-none"
-            style={{
-              backgroundColor: theme.colors.button.bg,
-              color: theme.colors.button.text,
-              borderColor: theme.colors.background,
-            }}
+            onChange={handleFileChange}
           />
-
-          <input
-            type="text"
+          <TextInput
             placeholder="Enter ranges (e.g. 1-3,5-7)"
             value={ranges}
-            onChange={(e) => setRanges(e.target.value)}
-            className="w-full p-3 rounded-lg text-center border-2 transition-all duration-200
-                       focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200 focus:outline-none"
-            style={{
-              backgroundColor: theme.colors.button.bg,
-              color: theme.colors.button.text,
-              borderColor: theme.colors.background,
-            }}
+            onChange={handleRangesChange}
           />
         </div>
 
-        <Button onClick={handleSplit} className="mt-6">
-          Split PDF
-        </Button>
+        <ErrorMessage message={error} className="w-full max-w-sm mt-4" />
+
+        {isLoading ? (
+          <LoadingSpinner message="Splitting PDF..." className="mt-6" />
+        ) : splitBlob ? (
+          <SuccessMessage
+            message="PDF split successfully!"
+            downloadLabel="Download Split Files (ZIP)"
+            onDownload={handleDownload}
+            onReset={() => {
+              setFile(null);
+              setRanges("");
+              setSplitBlob(null);
+              setError(null);
+            }}
+            className="mt-6"
+          />
+        ) : (
+          <Button onClick={handleSplit} className="mt-6" disabled={!file || !ranges}>
+            Split PDF
+          </Button>
+        )}
       </div>
 
       <ConfirmationModal

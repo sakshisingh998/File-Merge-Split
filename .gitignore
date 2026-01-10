@@ -1,72 +1,35 @@
-*.pdf
-*.env
-*.idea
-*.env
-*.idea
-*.pdf
-HELP.md
-target/
-backend/.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+# Environment variables
+.env
+.env.local
+.env.*.local
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
 
-### IntelliJ IDEA ###
-backend/.idea
-*.iws
-*.iml
-*.ipr
-*.pdf
-*.env
+# Backend
+backend/target/
+backend/.mvn/
+backend/mvnw
+backend/mvnw.cmd
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
-.vscode/
-<<<<<<< HEAD:.gitignore
+# IDE
 .idea/
-*.iml*.pdf
-=======
-backend/.idea/
+.vscode/
 *.iml
->>>>>>> main:backend/.gitignore
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+*.swp
+*.swo
+*~
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# OS
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp

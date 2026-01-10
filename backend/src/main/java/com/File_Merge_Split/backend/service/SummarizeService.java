@@ -1,8 +1,9 @@
 package com.File_Merge_Split.backend.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import com.File_Merge_Split.backend.service.GeminiService;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -10,6 +11,7 @@ import java.util.Map;
 @Service
 public class SummarizeService {
 
+    private static final Logger log = LoggerFactory.getLogger(SummarizeService.class);
     private final GeminiService geminiService;
 
     public SummarizeService(GeminiService geminiService) {
@@ -19,19 +21,14 @@ public class SummarizeService {
     public ResponseEntity<Map<String, String>> summarize(String text) {
         Map<String, String> response = new HashMap<>();
 
-        System.out.println("DEBUG: Text received by SummarizeService -> " + text);
-
         try {
             String summary = geminiService.askGemini("Summarize the following text:\n\n" + text);
-
-            System.out.println("DEBUG: Summary from GeminiService -> " + summary);
-
             response.put("status", "success");
-            response.put("summary", summary); // Only return summary
+            response.put("summary", summary);
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to summarize text", e);
             response.put("status", "error");
             response.put("message", "Failed to summarize text: " + e.getMessage());
             return ResponseEntity.badRequest().body(response);

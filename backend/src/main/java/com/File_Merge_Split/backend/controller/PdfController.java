@@ -4,11 +4,11 @@ import com.File_Merge_Split.backend.service.SplitService;
 import com.File_Merge_Split.backend.service.MergeService;
 import com.File_Merge_Split.backend.service.ExtractService;
 import com.File_Merge_Split.backend.service.SummarizeService;
+import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,14 +32,14 @@ public class PdfController {
     }
 
     @PostMapping("/split")
-    public ResponseEntity<Map<String, String>> splitPDF(
+    public ResponseEntity<Resource> splitPDF(
             @RequestParam("file") MultipartFile file,
             @RequestParam("ranges") String ranges) {
         return splitService.splitPDF(file, ranges);
     }
 
     @PostMapping("/merge")
-    public ResponseEntity<Map<String, String>> mergePDFs(
+    public ResponseEntity<Resource> mergePDFs(
             @RequestParam("files") List<MultipartFile> files) {
         return mergeService.mergePDFs(files);
     }
@@ -47,23 +47,14 @@ public class PdfController {
     @PostMapping("/extract-text")
     public ResponseEntity<Map<String, String>> extractText(
             @RequestParam("file") MultipartFile file) {
-        ResponseEntity<Map<String, String>> extractResponse = extractService.extractText(file);
-        System.out.println("DEBUG: Extracted text -> " + extractResponse.getBody().get("extractedText"));
-        return extractResponse;
+        return extractService.extractText(file);
     }
 
     @PostMapping("/extract-and-summarize")
     public ResponseEntity<Map<String, String>> extractAndSummarize(
             @RequestParam("file") MultipartFile file) {
-
         ResponseEntity<Map<String, String>> extractResponse = extractService.extractText(file);
         String extractedText = extractResponse.getBody().get("extractedText");
-
-        System.out.println("DEBUG: Extracted Text for summarization -> " + extractedText);
-
-        ResponseEntity<Map<String, String>> summaryResponse = summarizeService.summarize(extractedText);
-        System.out.println("DEBUG: Summary returned -> " + summaryResponse.getBody().get("summary"));
-
-        return summaryResponse;
+        return summarizeService.summarize(extractedText);
     }
 }
