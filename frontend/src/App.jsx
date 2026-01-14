@@ -1,114 +1,152 @@
-// src/App.jsx
+// src/App.jsx - Premium SaaS Dashboard Application
 import React, { useState } from "react";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
-import FloatingCircles3D from "./components/FloatingCircles3D";
-import SplitCard from "./components/SplitCard";
-import MergeCard from "./components/MergeCard";
-import ExtractCard from "./components/ExtractCard";
-import { Split, Merge, FileText } from "lucide-react";
+import Sidebar from "./components/Sidebar";
+import TopBar from "./components/TopBar";
+import Dashboard from "./components/modules/Dashboard";
+import PDFTools from "./components/modules/PDFTools";
+import AITools from "./components/modules/AITools";
+import Convert from "./components/modules/Convert";
+import Security from "./components/modules/Security";
 import theme from "./config/theme";
 
 function App() {
-  const [currentCard, setCurrentCard] = useState(0);
+  const [currentModule, setCurrentModule] = useState("dashboard");
+  const [appTheme, setAppTheme] = useState("light");
+  const [pdfTool, setPdfTool] = useState(null); // Track which PDF tool to activate
+  const [securityTool, setSecurityTool] = useState(null); // Track which Security tool to activate
 
-  const cards = [
-    { component: SplitCard, name: "Split", icon: Split },
-        { component: ExtractCard, name: "Extract & Summarize", icon: FileText }
-,
-    { component: MergeCard, name: "Merge", icon: Merge }
-  ];
+  const currentTheme = theme[appTheme];
 
-  const CurrentCardComponent = cards[currentCard].component;
+  const handleNavigate = (module, tool = null) => {
+    setCurrentModule(module);
+    if (tool) {
+      if (module === "pdf-tools") {
+        setPdfTool(tool);
+      } else if (module === "security") {
+        setSecurityTool(tool);
+      }
+    }
+  };
+
+  const renderModule = () => {
+    switch (currentModule) {
+      case "dashboard":
+        return <Dashboard theme={appTheme} onNavigate={handleNavigate} />;
+      case "pdf-tools":
+        return <PDFTools theme={appTheme} initialTool={pdfTool} />;
+      case "ai-tools":
+        return <AITools theme={appTheme} />;
+      case "convert":
+        return <Convert theme={appTheme} />;
+      case "security":
+        return <Security theme={appTheme} initialTool={securityTool} />;
+      case "activity":
+        return <ComingSoon module="Activity" theme={appTheme} />;
+      case "settings":
+        return <ComingSoon module="Settings" theme={appTheme} />;
+      default:
+        return <Dashboard theme={appTheme} />;
+    }
+  };
 
   return (
-    <div className="min-h-screen flex flex-col relative">
-      {/* 3D Floating Circles Background */}
-      <FloatingCircles3D />
-
-      {/* Background Gradient */}
-      <div
-        className="fixed inset-0 -z-20"
-        style={{
-          background: `linear-gradient(135deg, ${theme.colors.background} 0%, #E8C997 50%, #D4B786 100%)`,
+    <div
+      className="min-h-screen transition-colors duration-300"
+      style={{
+        backgroundColor: currentTheme.colors.background,
+        color: currentTheme.colors.text.primary,
+      }}
+    >
+      {/* Sidebar */}
+      <Sidebar
+        currentModule={currentModule}
+        onModuleChange={(module) => {
+          setCurrentModule(module);
+          // Reset tools when navigating away
+          if (module !== "pdf-tools") {
+            setPdfTool(null);
+          }
+          if (module !== "security") {
+            setSecurityTool(null);
+          }
         }}
+        theme={appTheme}
       />
 
-      {/* Main Content with backdrop blur for glass effect */}
+      {/* Top Bar */}
+      <TopBar
+        theme={appTheme}
+        onThemeToggle={() => setAppTheme(appTheme === "light" ? "dark" : "light")}
+      />
+
+      {/* Main Content */}
       <main
-        className="flex-grow flex flex-col items-center py-8 px-4 relative z-10"
+        className="transition-all duration-300"
         style={{
-          backdropFilter: "blur(0.5px)",
-          background: "rgba(243, 222, 186, 0.1)"
+          marginLeft: "256px", // Sidebar width
+          marginTop: "64px",    // Top bar height
+          padding: "2rem",
+          minHeight: "calc(100vh - 64px)",
         }}
       >
-        {/* Header */}
-        <Header />
-
-        {/* Navigation Description */}
-        <div className="text-center mb-8 max-w-2xl">
-
-            <p className="text-lg mb-6" style={{ color: theme.colors.secondary }}>
-              This utility suite provides a comprehensive solution for managing PDF files,
-              allowing you to split, merge, extract, and summarize documents efficiently.
-            </p>
-
-            {/* Horizontal Navigation Buttons */}
-            <div className="flex gap-4 justify-center flex-wrap">
-              {cards.map((card, index) => {
-                const IconComponent = card.icon;
-                const isActive = currentCard === index;
-
-                return (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentCard(index)}
-                    className={`flex items-center gap-3 px-6 py-3 rounded-lg font-semibold shadow-lg
-                               transition-all duration-200 transform hover:scale-105 active:scale-95
-                               focus:outline-none focus:ring-2 focus:ring-offset-2 backdrop-blur-sm ${
-                      isActive
-                        ? 'ring-2 scale-105'
-                        : 'hover:shadow-xl'
-                    }`}
-                    style={{
-                      backgroundColor: isActive ? theme.colors.accent : theme.colors.button.bg,
-                      color: isActive ? theme.colors.card.text : theme.colors.button.text,
-                      border: `2px solid ${isActive ? theme.colors.accent : theme.colors.button.border}`,
-                    }}
-                  >
-                    <IconComponent size={20} />
-                    <span>{card.name}</span>
-                  </button>
-                );
-              })}
-          </div>
-        </div>
-
-        {/* Single Card Display with enhanced glass effect */}
-        <div className="w-full max-w-md mx-auto">
-          <div className="backdrop-blur-sm rounded-2xl p-1" style={{
-            background: "rgba(255, 255, 255, 0.1)",
-            border: "1px solid rgba(255, 255, 255, 0.2)"
-          }}>
-            <CurrentCardComponent />
-          </div>
-        </div>
-
-        {/* Current Card Indicator */}
-        <div
-          className="mt-6 text-center text-sm opacity-80 backdrop-blur-sm px-4 py-2 rounded-lg"
-          style={{
-            background: "rgba(243, 222, 186, 0.6)",
-            color: theme.colors.secondary
-          }}
-        >
-          <p>{cards[currentCard].name} • {currentCard + 1} of {cards.length}</p>
+        <div className="max-w-7xl mx-auto">
+          {renderModule()}
         </div>
       </main>
+    </div>
+  );
+}
 
-      {/* Footer with backdrop blur */}
-      <div className="backdrop-blur-sm">
-        <Footer />
+// Coming Soon Component for future modules
+function ComingSoon({ module, theme }) {
+  const themeColors = theme === "dark"
+    ? {
+        bg: "#1F1515",
+        surface: "#2B1D1D",
+        text: "#FAF7F5",
+        textSecondary: "#D4C7C0",
+        border: "#3F2E2E",
+      }
+    : {
+        bg: "#FAF7F5",
+        surface: "#FFFFFF",
+        text: "#2B1D1D",
+        textSecondary: "#7A5C58",
+        border: "#E5DED9",
+      };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold mb-2" style={{ color: themeColors.text }}>
+          {module}
+        </h1>
+        <p className="text-sm" style={{ color: themeColors.textSecondary }}>
+          This feature is coming soon
+        </p>
+      </div>
+
+      <div
+        className="p-12 rounded-xl text-center"
+        style={{
+          backgroundColor: themeColors.surface,
+          border: `1px solid ${themeColors.border}`,
+        }}
+      >
+        <div className="max-w-md mx-auto">
+          <div
+            className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4"
+            style={{ backgroundColor: themeColors.bg }}
+          >
+            <span className="text-4xl">🚀</span>
+          </div>
+          <h2 className="text-2xl font-semibold mb-2" style={{ color: themeColors.text }}>
+            Coming Soon
+          </h2>
+          <p className="text-sm" style={{ color: themeColors.textSecondary }}>
+            We're working hard to bring you {module.toLowerCase()} features. Stay tuned!
+          </p>
+        </div>
       </div>
     </div>
   );

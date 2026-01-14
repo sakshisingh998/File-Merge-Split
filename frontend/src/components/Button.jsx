@@ -1,64 +1,88 @@
-// src/components/Button.jsx
+// src/components/Button.jsx - Premium SaaS Button Component
 import React from "react";
-import theme from "../config/theme";
 
-function Button({ children, onClick, variant = "default", className = "", disabled = false }) {
-  const baseClasses = "px-6 py-3 rounded-lg font-semibold shadow-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2";
+function Button({ 
+  children, 
+  onClick, 
+  variant = "primary", 
+  className = "", 
+  disabled = false,
+  theme = "light",
+  style = {}
+}) {
+  const themeColors = theme === "dark"
+    ? {
+        primary: {
+          bg: "#E0B089",
+          text: "#2B1D1D",
+          hover: "#D49A6B",
+        },
+        secondary: {
+          bg: "#3F2E2E",
+          text: "#FAF7F5",
+          hover: "#4A3A3A",
+        },
+        outline: {
+          bg: "transparent",
+          text: "#FAF7F5",
+          border: "#3F2E2E",
+          hover: "#3F2E2E",
+        },
+      }
+    : {
+        primary: {
+          bg: "#E0B089",
+          text: "#2B1D1D",
+          hover: "#D49A6B",
+        },
+        secondary: {
+          bg: "#FAF7F5",
+          text: "#2B1D1D",
+          hover: "#F2E5D5",
+        },
+        outline: {
+          bg: "transparent",
+          text: "#2B1D1D",
+          border: "#E5DED9",
+          hover: "#FAF7F5",
+        },
+      };
 
-  const getButtonStyle = (variant) => {
+  const getButtonColors = () => {
     switch (variant) {
       case "secondary":
-        return {
-          backgroundColor: theme.colors.secondary,
-          color: theme.colors.card.text,
-          border: `2px solid ${theme.colors.accent}`
-        };
-      case "success":
-        return {
-          backgroundColor: "#10B981",
-          color: "white",
-          border: "2px solid #10B981"
-        };
-      case "danger":
-        return {
-          backgroundColor: "#EF4444",
-          color: "white",
-          border: "2px solid #EF4444"
-        };
+        return themeColors.secondary;
+      case "outline":
+        return themeColors.outline;
       default:
-        return {
-          backgroundColor: theme.colors.button.bg,
-          color: theme.colors.button.text,
-          border: `2px solid ${theme.colors.button.border}`
-        };
+        return themeColors.primary;
     }
   };
 
-  const getHoverStyle = () => ({
-    backgroundColor: variant === "secondary" ? theme.colors.accent :
-                    variant === "success" ? "#059669" :
-                    variant === "danger" ? "#DC2626" :
-                    theme.colors.button.hoverBg
-  });
-
-  const disabledClasses = disabled ? "opacity-50 cursor-not-allowed hover:scale-100 active:scale-100" : "";
-  const buttonStyle = getButtonStyle(variant);
+  const colors = getButtonColors();
+  const disabledClasses = disabled 
+    ? "opacity-50 cursor-not-allowed hover:scale-100 active:scale-100" 
+    : "";
 
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`${baseClasses} ${disabledClasses} ${className}`}
-      style={buttonStyle}
+      className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 ${disabledClasses} ${className}`}
+      style={{
+        backgroundColor: variant === "outline" ? colors.bg : colors.bg,
+        color: colors.text,
+        border: variant === "outline" ? `1px solid ${colors.border}` : "none",
+        ...style,
+      }}
       onMouseEnter={(e) => {
         if (!disabled) {
-          const hoverStyle = getHoverStyle();
-          e.target.style.backgroundColor = hoverStyle.backgroundColor;
+          e.currentTarget.style.backgroundColor = colors.hover;
         }
       }}
       onMouseLeave={(e) => {
         if (!disabled) {
-          e.target.style.backgroundColor = buttonStyle.backgroundColor;
+          e.currentTarget.style.backgroundColor = variant === "outline" ? colors.bg : colors.bg;
         }
       }}
     >

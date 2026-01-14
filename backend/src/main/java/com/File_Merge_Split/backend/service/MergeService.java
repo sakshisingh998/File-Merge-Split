@@ -1,24 +1,27 @@
 package com.File_Merge_Split.backend.service;
 
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.util.HashMap;
+import java.io.FileInputStream;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class MergeService {
 
-    public ResponseEntity<Map<String, String>> mergePDFs(List<MultipartFile> files) {
-        Map<String, String> response = new HashMap<>();
+    public ResponseEntity<byte[]> mergePDFs(List<MultipartFile> files) {
+        File mergedFile = null;
 
         try {
             PDFMergerUtility merger = new PDFMergerUtility();
-            merger.setDestinationFileName("merged.pdf");
+            mergedFile = new File(System.getProperty("java.io.tmpdir") + "/merged_" + System.currentTimeMillis() + ".pdf");
+            merger.setDestinationFileName(mergedFile.getAbsolutePath());
 
             for (MultipartFile f : files) {
                 File convFile = new File(System.getProperty("java.io.tmpdir") + "/" + f.getOriginalFilename());
@@ -27,14 +30,33 @@ public class MergeService {
             }
 
             merger.mergeDocuments(null);
-            response.put("status", "success");
-            response.put("message", "PDFs merged successfully (saved as merged.pdf)");
-            return ResponseEntity.ok(response);
+
+            // Read the merged file into byte array
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (FileInputStream fis = new FileInputStream(mergedFile)) {
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                while ((bytesRead = fis.read(buffer)) != -1) {
+                    baos.write(buffer, 0, bytesRead);
+                }
+            }
+
+            byte[] pdfBytes = baos.toByteArray();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", "merged.pdf");
+
+            return ResponseEntity.ok().headers(headers).body(pdfBytes);
 
         } catch (Exception e) {
-            response.put("status", "error");
-            response.put("message", "Failed to merge PDFs: " + e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.badRequest()
+                    .body(("Failed to merge PDFs: " + e.getMessage()).getBytes());
+        } finally {
+            // Clean up temporary files
+            if (mergedFile != null && mergedFile.exists()) {
+                mergedFile.delete();
+            }
         }
     }
 }
