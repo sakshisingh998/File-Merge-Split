@@ -1,10 +1,10 @@
 import React from "react";
 import theme from "../config/theme";
 
-function TextInput({ placeholder, value, onChange, className = "" }) {
+function TextInput({ type = "text", placeholder, value, onChange, className = "" }) {
   return (
     <input
-      type="text"
+      type={type}
       placeholder={placeholder}
       value={value}
       onChange={onChange}
